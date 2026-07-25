@@ -176,7 +176,24 @@ shell_quote() {
   printf "'"
 }
 
+# LOCAL PATCH (claude-settings): briefs instruct crewmates to report status via
+# fm-status (sandbox-excluded, append-only, path-validated) instead of
+# `echo >>`, because the OS sandbox denies crewmate writes to $FM_HOME/state
+# (workflow-ai/SANDBOX-GAPS.md item 10).
+#
+# CORRECTED 2026-07-21: /updatefirstmate does NOT overwrite this file, so there is
+# nothing to reapply. fm-ff-lib.sh is fast-forward only and returns early on a
+# dirty tree ("skipped: dirty working tree"); it never stashes and never forces.
+# The real cost runs the other way: while this patch sits here the clone STOPS
+# UPDATING, and says so in one easy-to-miss line. claude-settings install.py
+# reports the freeze and how many commits it has cost.
 STATUS_FILE=$(shell_quote "$STATE/$ID.status")
+# LOCAL PATCH (claude-settings): same problem one directory over, for the scout's
+# deliverable (SANDBOX-GAPS item 13). fm-report is create-only and validates BOTH
+# paths; it requires the source to be named literally report.md and refuses a
+# symlink, because it runs outside the sandbox and would otherwise be a way to
+# read files the crewmate itself cannot.
+REPORT_FILE=$(shell_quote "$DATA/$ID/report.md")
 
 if [ "$KIND" = secondmate ]; then
 SECONDMATE_PROJECTS=""
@@ -235,7 +252,8 @@ A message with NO marker is the captain typing directly into your pane: treat it
 # Escalation to main firstmate
 Handle routine work yourself.
 Report only true captain-relevant outcomes or a declared external wait by appending one line:
-   \`echo "{state}: {one short line}" >> $STATUS_FILE\`
+   \`fm-status $STATUS_FILE "{state}: {one short line}"\`
+   Keep the note plain text - no backticks and no \$(...): inside the double quotes the shell would run them as a command, and fm-status rejects the line anyway.
 States: working, needs-decision, blocked, $PAUSED_VERB, done, failed.
 Use \`$PAUSED_VERB: {why}\` (distinct from \`blocked:\`) only when your domain is deliberately idling on a known external wait you expect to clear on its own; use \`blocked:\` when you are stuck and need firstmate to act.
 Use this only for material phase changes, a captain decision, a real blocker, a failure, or work ready for review.
@@ -318,7 +336,8 @@ The report is the only thing that survives, so anything worth keeping must be in
 2. Stay inside this worktree; the only files you may write outside it are the report and the status file below.
 3. Use gh-axi for GitHub operations and chrome-devtools-axi for browser operations.
 4. Report status by appending one line:
-   \`echo "{state}: {one short line}" >> $STATUS_FILE\`
+   \`fm-status $STATUS_FILE "{state}: {one short line}"\`
+   Keep the note plain text - no backticks and no \$(...): inside the double quotes the shell would run them as a command, and fm-status rejects the line anyway.
    States: working, needs-decision, blocked, $PAUSED_VERB, done, failed.
    Each append wakes firstmate, so report sparingly: only phase changes a supervisor
    would act on and the needs-decision/blocked/paused/done/failed states. No step-by-step
@@ -337,7 +356,9 @@ The report is the only thing that survives, so anything worth keeping must be in
    daemon error, append \`blocked: {the daemon error}\` and stop; only firstmate manages the daemon.
 
 # Definition of done
-Write your findings to \`$DATA/$ID/report.md\`.
+Write your findings to \`report.md\` at the ROOT of your worktree, then land it with:
+   \`fm-report $REPORT_FILE report.md\`
+The home is read-only to you, so writing there directly fails; fm-report is the sanctioned way across. It is create-only and takes the source as-is, so get the file right before running it - the name must be exactly \`report.md\` and it must be a real file, not a symlink.
 The report must stand alone: what you did, what you found, the evidence (commands run, output, file:line references), and what you recommend.
 Before reporting done, read and follow \`$FM_ROOT/.agents/skills/decision-hold-lifecycle/SKILL.md\` and pass its shared completion gate for the report and any visual review.
 When the report is complete, append \`done: {one-line conclusion}\` to the status file and stop.
@@ -431,7 +452,8 @@ $RULE1
 2. Stay inside this worktree; modify nothing outside it.
 3. Use gh-axi for GitHub operations and chrome-devtools-axi for browser operations.
 4. Report status by appending one line:
-   \`echo "{state}: {one short line}" >> $STATUS_FILE\`
+   \`fm-status $STATUS_FILE "{state}: {one short line}"\`
+   Keep the note plain text - no backticks and no \$(...): inside the double quotes the shell would run them as a command, and fm-status rejects the line anyway.
    States: working, needs-decision, blocked, $PAUSED_VERB, done, failed.
    Each append wakes firstmate, so report sparingly: only phase changes a supervisor
    would act on (setup done, bug reproduced, fix implemented, validation passed) and the
