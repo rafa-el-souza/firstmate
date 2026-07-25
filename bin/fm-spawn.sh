@@ -826,7 +826,15 @@ launch_template() {
     # does NOT suppress the interactive ghost text (verified empirically), so the env
     # var is the correct control. The dim-aware composer reader in fm-tmux-lib.sh is
     # the defense-in-depth backstop for any pane this flag cannot reach.
-    claude) printf '%s' 'CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION=false claude --dangerously-skip-permissions __MODELFLAG____EFFORTFLAG__"$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
+    # LOCAL PATCH (claude-settings): launch via claude-crew, which sets
+    # GUARD_UNATTENDED=1 so the tool_gatekeeper's soft gates deny-and-explain
+    # instead of rendering an ask prompt into a pane no human watches.
+    # It is a COMMIT on the `fleet` branch, not a working-tree edit: while it
+    # lives here the clone cannot be fast-forwarded at all, and the way through
+    # is the fm-update-patched cycle (claude-settings docs/orchestration-stack.md
+    # §4). Upstream's brief encoder is kept as-is - this patch swaps the binary
+    # and nothing else.
+    claude) printf '%s' 'CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION=false "$HOME/.claude/bin/claude-crew" --dangerously-skip-permissions __MODELFLAG____EFFORTFLAG__"$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
     codex)
       if [ "$kind" = secondmate ]; then
         printf '%s' 'codex __MODELFLAG____EFFORTFLAG__--dangerously-bypass-approvals-and-sandbox "$(__OPINPUT__ encode launch-brief < __BRIEF__)"'
