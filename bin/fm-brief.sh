@@ -254,6 +254,7 @@ Handle routine work yourself.
 Report only true captain-relevant outcomes or a declared external wait by appending one line:
    \`fm-status $STATUS_FILE "{state}: {one short line}"\`
    Keep the note plain text - no backticks and no \$(...): inside the double quotes the shell would run them as a command, and fm-status rejects the line anyway.
+   Run it ALONE on its line too - no pipe, redirect, semicolon or && anywhere on that line, or the call is refused before it runs.
 States: working, needs-decision, blocked, $PAUSED_VERB, done, failed.
 Use \`$PAUSED_VERB: {why}\` (distinct from \`blocked:\`) only when your domain is deliberately idling on a known external wait you expect to clear on its own; use \`blocked:\` when you are stuck and need firstmate to act.
 Use this only for material phase changes, a captain decision, a real blocker, a failure, or work ready for review.
@@ -338,6 +339,7 @@ The report is the only thing that survives, so anything worth keeping must be in
 4. Report status by appending one line:
    \`fm-status $STATUS_FILE "{state}: {one short line}"\`
    Keep the note plain text - no backticks and no \$(...): inside the double quotes the shell would run them as a command, and fm-status rejects the line anyway.
+   Run it ALONE on its line too - no pipe, redirect, semicolon or && anywhere on that line, or the call is refused before it runs.
    States: working, needs-decision, blocked, $PAUSED_VERB, done, failed.
    Each append wakes firstmate, so report sparingly: only phase changes a supervisor
    would act on and the needs-decision/blocked/paused/done/failed states. No step-by-step
@@ -359,6 +361,7 @@ The report is the only thing that survives, so anything worth keeping must be in
 Write your findings to \`report.md\` at the ROOT of your worktree, then land it with:
    \`fm-report $REPORT_FILE report.md\`
 The home is read-only to you, so writing there directly fails; fm-report is the sanctioned way across. It is create-only and takes the source as-is, so get the file right before running it - the name must be exactly \`report.md\` and it must be a real file, not a symlink.
+Run it ALONE on its line - no pipe, redirect, semicolon or && anywhere on that line. A sandbox-excluded command makes the harness run the WHOLE line unconfined, so the call is refused before it runs; issue anything else as a separate command.
 The report must stand alone: what you did, what you found, the evidence (commands run, output, file:line references), and what you recommend.
 Before reporting done, read and follow \`$FM_ROOT/.agents/skills/decision-hold-lifecycle/SKILL.md\` and pass its shared completion gate for the report and any visual review.
 When the report is complete, append \`done: {one-line conclusion}\` to the status file and stop.
@@ -454,6 +457,7 @@ $RULE1
 4. Report status by appending one line:
    \`fm-status $STATUS_FILE "{state}: {one short line}"\`
    Keep the note plain text - no backticks and no \$(...): inside the double quotes the shell would run them as a command, and fm-status rejects the line anyway.
+   Run it ALONE on its line too - no pipe, redirect, semicolon or && anywhere on that line, or the call is refused before it runs.
    States: working, needs-decision, blocked, $PAUSED_VERB, done, failed.
    Each append wakes firstmate, so report sparingly: only phase changes a supervisor
    would act on (setup done, bug reproduced, fix implemented, validation passed) and the
